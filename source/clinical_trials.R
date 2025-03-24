@@ -5,8 +5,6 @@ library(forcats)
 library(RColorBrewer)
 library(gridExtra)
 
-try(setwd("~/Documents/Work/KRAS/"),silent = T)
-try(setwd("/imppc/labs/mplab/salonso/KRAS/"),silent = T)
 
 # useful functions to expand and contract terms
 
@@ -36,11 +34,16 @@ mytheme <- theme(panel.background = element_rect(fill="grey95"),
 
 
 
+if(!file.exists("data/Thesaurus.txt")) {
+  
+  curl::curl_download("https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.FLAT.zip",destfile = "data/Thesaurus.zip")
+  
+}
 
-thesaurus <- fread("data/Thesaurus.txt",quote="")
 
+thesaurus <- fread("data/Thesaurus.zip",quote="")
 names(thesaurus) <- c("code","concept IRI","parents","synonyms","definition","display name","concept status","semantic type","concept in subset")
-thesaurus$synonyms %>% split1 %>% sapply(FUN=function(x) x[1]) -> thesaurus$name # the prefrerred name
+thesaurus$synonyms %>% split1 %>% sapply(FUN=function(x) x[1]) -> thesaurus$name # the preferred name
 setkey(thesaurus,"code")
 
 # remove retired concepts
@@ -56,7 +59,6 @@ thesaurus <- merge(thesaurus,x,by="code",all.x=T)
 thesaurus[is.na(children),children:=0]
 
 isDrug <- grep("Pharmacolo",thesaurus$`semantic type`)
-
 
 # reconstruct the thesaurus tree
 
@@ -153,11 +155,6 @@ drugs[grep("G12V",synonyms),Target:="G12V"]
 drugs[grep("C185876|C188048|C178264|C71146|C206998",code),Target:="pan-KRAS"]
 drugs[grep("C209714|C204884|C202009|C204252|C162269|C165638|C2067|C179231|C165514|C200465|C162186",code),Target:="multi-KRAS"]
 
-
-#drugs[Group=="KRAS" & grepl("pan-",name,ignore.case=T)]
-#drugs[Group=="KRAS" & grepl("pan-",name,ignore.case=T),Target:="pan-KRAS"]
-
-#drugs[grep("RSC-1255|LUNA18|Paluratide|RMC-6236|salirasib|QTX3034|talorasib",synonyms,ignore.case=T),Target:="pan-KRAS"]
 
 #SOS1/SHP2
 drugs[grep("SOS1|SHP2",Group),Target:="SOS1|SHP2"]

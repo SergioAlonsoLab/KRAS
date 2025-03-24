@@ -199,7 +199,7 @@ drugs[,From:="NCI Thesaurus"]
 
 # additional manually added drugs
 
-additional.drugs <- fread("data/drug.revision.txt")
+additional.drugs <- fread("additional_files/drug.revision.txt")
 
 for(i in 1:nrow(additional.drugs)) {
   
@@ -255,17 +255,21 @@ dev.off()
 
 # Clinical trials for colorectal cancer or solid tumors ----
 
-ctrials <- fread("data/ctg-studies.csv")
+browseURL("https://clinicaltrials.gov/search?cond=((colon%20OR%20rectal%20OR%20colorectal)%20AND%20cancer)%20OR%20(solid%20tumors)")
+# download ctg-studies 
+
+file.copy(from = "~/Downloads/ctg-studies.csv",to = "additional_files/ctg-studes.csv",overwrite = T)
+
+ctrials <- fread("additional_files/ctg-studes.csv")
 setkey(ctrials,"NCT Number")
 
 # correct some misspellings
 ctrials[grep("LY4066434.",Interventions),Interventions:=gsub("LY4066434\\.","LY4066434",Interventions)] 
-ctrials[grep("5Fluoro",Interventions),Interventions:=gsub("5Fluoro","5-Fluoro",Interventions)] 
-ctrials[grep("5FLUORO",Interventions),Interventions:=gsub("5FLUORO","5-FLUORO",Interventions)] 
+ctrials[grep("5Fluoro",Interventions,ignore.case = T),Interventions:=gsub("5Fluoro","5-Fluoro",Interventions,ignore.case = T)] 
 
 dim(ctrials)
 
-# search in ctrials
+# search in clinical trials
 
 crc <- ctrials[grepl("colon|rectal|gastrointestinal|solid|crc",Conditions,ignore.case = T) & `Study Type`=="INTERVENTIONAL"]
 crc <- crc[grep("TREATMENT",`Study Design`)]

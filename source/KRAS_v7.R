@@ -30,17 +30,10 @@ library(emmeans)
 # Figure SX: 
 
 
-# Set working directory (system dependent) -----
 
-#wd <- "/imppc/labs/cge/salonso/KRAS/"
-
-#try(setwd("/imppc/labs/cge/salonso/KRAS/"),silent=T)
-#try(setwd("~/Documents/Work/KRAS/"),silent=T)
-
-# Graphical parameteres and functions to homogenize look & feel ----
+# Graphical parameters and functions look & feel ----
 
 palette <- list()
-
 
 palette$study <- c("#C19F08","#369E4B","#357EB9","#FA792F","#ce3206")
 names(palette$study) <- c("ALL","DFCI Primary","TCGA Primary","MSKCC Primary","MSKCC Metastasis")
@@ -57,7 +50,7 @@ theme1 <- theme(panel.background = element_rect(fill="grey95"),
                 panel.border = element_rect(color="grey50",fill=NA,linewidth=rel(1)),
                 strip.text = element_text(size=12))
 
-# panel labeller
+# panel labeller (a function to add a letter in the left corner of a graph)
 
 panelTag <- function(tag="A",x=1,y=0,fsize=20) {
   textGrob(label=tag,x=unit(x,"cm"),y=unit(y,"cm"),gp = gpar(fontsize=fsize))
@@ -89,6 +82,10 @@ selected.genes <- intersect(genes$hgnc_symbol,colnames(bowel))
 bowel[,KRAS.CODON:=factor(KRAS.CODON,c("WT","G12","G13","Q61","K117","A146","Other","Multiple"))]
 bowel[,SAMPLE_TYPE:=factor(SAMPLE_TYPE,c("Primary","Metastasis"))]
 goi <- c("APC","TP53","FBXW7","SMAD4","KRAS","NRAS","HRAS","PIK3CA","BRAF")
+
+# create an ouput directory, if it does not exists
+
+if(!file.exists("output")) dir.create("output")
 
 
 # STATS 1: Ras vs primary / metastasis ------

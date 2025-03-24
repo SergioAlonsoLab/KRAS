@@ -4,10 +4,6 @@ library(data.table)
 library(tidyr)
 library(ggplot2)
 
-# Set working directory -----
-
-#try(setwd("/imppc/labs/cge/salonso/KRAS/"))
-#try(setwd("~/Documents/Work/KRAS/"))
 
 # Load datasets ---
 
@@ -54,7 +50,6 @@ clinical <- clinical[!is.na(MUTATION_COUNT)]
 # number of samples per patient 
 
 clinical[,SAMPLES_PATIENT:=.N,by=patientId]
-
 clinical[,SAMPLE_COUNT:=as.numeric(SAMPLE_COUNT)]
 clinical[SAMPLE_COUNT!=SAMPLES_PATIENT]
 
@@ -63,13 +58,10 @@ clinical[SAMPLE_COUNT!=SAMPLES_PATIENT]
 clinical[is.na(GENE_PANEL),GENE_PANEL:="WES"]
 
 clinical[,table(GENE_PANEL)]
-
 selected.genes <- impact$IMPACT341
-
 mutations <- rbindlist(mutational_data[1:3],fill=TRUE)[,list(sampleId,hugoGeneSymbol,proteinChange)]
 
 # check if all samples form clinical are in the mutation table
-
 all(clinical$sampleId %in% mutations$sampleId)
 
 # select just genes that have been analysed in all datasets
@@ -78,11 +70,9 @@ setdiff(selected.genes,mutations$hugoGeneSymbol) # PMAIP1 is never mutated
 mutations <- rbind(mutations,data.table(sampleId="foo",hugoGeneSymbol="PMAIP1",proteinChange="WT"))
 
 # for merging purposes, add all samples to the list of mutations
-
 setdiff(clinical$sampleId,mutations$sampleId)
-#mutations <- rbind(mutations,data.table(sampleId=clinical$sampleId,hugoGeneSymbol="no_gene",proteinChange="no_change"))
 
-# convert in atable
+# convert in a table
 mutations <- dcast(mutations,sampleId ~ hugoGeneSymbol,value.var = "proteinChange",fun.aggregate = function(x) paste(x,collapse="|"))
 mutations[mutations==""] <- "WT"
 
@@ -91,7 +81,6 @@ setdiff(clinical$sampleId,mutations$sampleId) # some samples do not harbour muta
 # create bowel DT, the table used for most figures an analysis
 
 bowel <- merge(clinical,mutations,all.x=T)
-
 for(i in selected.genes) {
   
   bowel[[i]][is.na(bowel[[i]])] <- "WT"

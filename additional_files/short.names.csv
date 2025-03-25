@@ -1,0 +1,128 @@
+code,name,short.Name
+C178264,Ras Inhibitor RSC-1255,RSC1255
+C185876,Ras Inhibitor LUNA18,LUNA18
+C188048,RAS Inhibitor RMC-6236,RMC6236
+C71146,Salirasib,Salirasib
+C199055,Fulzerasib,Fulzerasib
+C202009,Pan-KRAS Inhibitor YL-17231,YL17231
+C204884,KRAS Mutant Inhibitor QTX3034,QTX3034
+C206998,Talorasib,Talorasib
+C209714,Pan-KRAS Inhibitor PF-07934040,PF07934040
+C213206,Pan-KRAS Inhibitor LY4066434,LY4066434
+C154287,Sotorasib,Sotorasib
+C157493,Adagrasib,Adagrasib
+C166410,KRAS G12C Inhibitor LY3499446,LY3499446
+C167157,KRAS G12C Inhibitor JNJ-74699157,JNJ74699157
+C173995,Divarasib,Divarasib
+C177916,Opnurasib,Opnurasib
+C178562,Garsorasib,Garsorasib
+C181751,Olomorasib,Olomorasib
+C181904,Glecirasib,Glecirasib
+C181997,KRAS G12C Inhibitor BI 1823911,BI1823911
+C182070,KRAS G12C Inhibitor IBI351,IBI351
+C183160,KRAS G12C Inhibitor GH35,GH35
+C185288,KRAS G12C Inhibitor MK-1084,MK1084
+C185398,KRAS G12C Inhibitor YL-15293,YL15293
+C187346,KRAS G12C Inhibitor BPI-421286,BPI421286
+C187660,KRAS G12C Inhibitor HS-10370,HS10370
+C188231,KRAS G12C Inhibitor D3S-001,D3S001
+C189824,KRAS G12C Inhibitor RMC-6291,RMC6291
+C190135,KRAS G12C Inhibitor HBI-2438,HBI2438
+C200260,KRAS G12C Inhibitor GEC255,GEC255
+C202247,KRAS Inhibitor BI 3706674,BI 3706674
+C203654,KRAS G12C Inhibitor BEBT-607,BEBT607
+C205358,KRAS G12C Inhibitor BBO-8520,BBO8520
+C206215,KRAS G12C Inhibitor FMC-376,FMC376
+C208075,KRAS G12C Inhibitor HYP-2090PTSA,HYP2090PTSA
+C208076,KRAS G12C Inhibitor ZG19018,ZG19018
+C213772,KRAS G12C Inhibitor JMKX001899,JMKX001899
+C191205,KRAS G12D Degrader ASP3082,ASP3082
+C192673,KRAS G12D Inhibitor HRS-4642,HRS4642
+C200319,KRAS G12D Inhibitor MRTX1133,MRTX1133
+C201828,KRAS G12D Inhibitor RMC-9805,RMC9805
+C206213,KRAS G12D Inhibitor TSN1611,TSN1611
+C206252,KRAS G12D Inhibitor INCB161734,INCB161734
+C206987,Setidegrasib,Setidegrasib
+C208020,KRAS G12D Inhibitor QTX3046,QTX3046
+C211591,KRAS G12D Inhibitor LY3962673,LY3962673
+C211637,KRAS G12D Inhibitor AZD0022,AZD0022
+C212079,KRAS G12D Degrader ASP4396,ASP4396
+C62508,Diazepinomicin,Diazepinomicin
+C106254,Tovorafenib,Tovorafenib
+C116861,Pan-RAF Inhibitor LY3009120,LY3009120
+C118294,Donafenib,Donafenib
+C121646,Belvarafenib,Belvarafenib
+C121952,pan-RAF Kinase Inhibitor CCT3833,CCT3833
+C125003,Naporafenib,Naporafenib
+C180835,Exarafenib,Exarafenib
+C187123,pan-RAF Inhibitor XP-102,XP102
+C190136,pan-RAF Inhibitor QLH11906,QLH11906
+C191648,pan-RAF Inhibitor JZP815,JZP815
+C200038,RAF Inhibitor BDTX-4933,BDTX4933
+C200276,pan-RAF Inhibitor TR128,TR128
+C206466,RAF Inhibitor DCC-3084,DCC3084
+C206913,Flezurafenib,Flezurafenib
+C207942,MEK/RAF Molecular Glue IK-595,IK595
+C2722,RAF Kinase Inhibitor L-779450,L779450
+C44168,N-(5-tert-butyl-3-isoxazolyl)-N-(4-(4-pyridinyl)oxyphenyl) Urea,Policyclic Urea
+C61948,Sorafenib,Sorafenib
+C69135,RAF Kinase Inhibitor XL281,XL281
+C107245,Agerafenib,Agerafenib
+C113330,Plixorafenib,Plixorafenib
+C124995,Lifirafenib,Lifirafenib
+C134967,BRAFV600/PI3K Inhibitor ASN003,ASN003
+C159531,BRAF Inhibitor LUT014,LUT014
+C170951,BRAF(V600E) Kinase Inhibitor ABM-1310,ABM1310
+C173633,Brimarafenib,Brimarafenib
+C175553,Tinlorafenib,Tinlorafenib
+C182071,BRAF V600E Inhibitor HLX208,HLX208
+C191953,Claturafenib,Claturafenib
+C199283,BRAF V600E Degrader CFT1946,CFT1946
+C203069,Uplarafenib,Uplarafenib
+C211730,Mosperafenib,Mosperafenib
+C61311,B-Raf/VEGFR-2 Inhibitor RAF265,RAF265
+C64768,Vemurafenib,Vemurafenib
+C82386,Dabrafenib,Dabrafenib
+C92591,BRAF(V600E) Kinase Inhibitor RO5212054,RO5212054
+C94224,BRAF Inhibitor ARQ 736,ARQ736
+C98283,Encorafenib,Encorafenib
+C152216,Rigosertib,Rigosertib
+C184955,Regorafenib,Regorafenib
+C2721,c-raf Antisense Oligonucleotide ISIS 5132,ISIS5132
+C80060,Avutometinib,Avutometinib
+C207813,Pan-RAF/MEK Molecular Glue NST-628,NST628
+C126653,Fluorine F 18 Dabrafenib,F18 Dabrafenib
+C121958,Carbon C 14 Vemurafenib,C14 Vemurafenib
+C166138,Pan-KRAS Inhibitor BI 1701963,BI1701963
+C192822,SOS1 Inhibitor MRTX0902,MRTX0902
+C208079,SOS1 Inhibitor ZG2001 Tosylate,ZG2001 Tosylate
+C211867,SOS1 Inhibitor KQB198,KQB198
+C139559,Batoprotafib,Batoprotafib
+C155850,Vociprotafib,Vociprotafib
+C160207,SHP2 Inhibitor JAB-3068,JAB3068
+C164218,SHP2 Inhibitor JAB-3312,JAB3312
+C176881,SHP2 Inhibitor ERAS-601,ERAS601
+C177417,SHP2 Inhibitor BBP-398,BBP398
+C178469,SHP2 Inhibitor PF-07284892,PF07284892
+C180590,SHP2 Inhibitor SH3809,SH3809
+C185599,SHP2 Inhibitor HBI-2376,HBI2376
+C188117,SHP2 Inhibitor HS-10381,HS10381
+C192173,SHP2 Inhibitor ET0038,ET0038
+C199073,Migoprotafib,Migoprotafib
+C142888,Anti-K-RAS G12V mTCR-transduced Autologous Peripheral Blood Lymphocytes,KRAS-G12V mTCR
+C156889,Anti-K-RAS G12D mTCR-transduced Autologous Peripheral Blood Lymphocytes,KRAS-G12D mTCR
+C204099,Autologous KRAS G12D-specific HLA-C*08:02-restricted TCR Gene Engineered T-lymphocytes NT-112,NT112
+C204252,Autologous KRAS Mutant-specific TCRs Gene Engineered PBLs,KRAS-mut PBLs
+C204799,Autologous HLA-A*11:01 KRASG12V-specific TCR-expressing CD8- and CD4-positive T-lymphocytes AFNT-211,AFNT211
+C212035,Autologous KRAS G12D Mutant-specific HLA-C*08:02-/KRAS G12D Mutant-specific HLA-A*11:01-/KRAS G12V Mutant-specific HLA-C*01:02-/TP53 R175H Mutant-specific HLA-A*02:01-restricted TCR Genes Engineered T-lymphocytes,KRAS-G12D/V mTCR
+C158466,Attenuated Live Listeria monocytogenes Encoding KRAS G12D,Listeria vac
+C162186,mRNA-derived KRAS-targeted Vaccine V941,mRNA vac V941
+C162269,Autologous mDC3/8-KRAS Vaccine,mDC vac
+C165638,Pooled Mutant KRAS-Targeted Long Peptide Vaccine,Pept vac
+C179231,AMP KRAS Vaccine ELI-002,AMP vac ELI002
+C200465,RAS Peptide Cancer Vaccine TG01,Pept vac TG01
+C2067,K-RAS Protein Vaccine,Prot vac
+C29136,K-RAS ASP-13 Mutant Protein,G13N vac
+C29137,K-RAS GLY-12 Mutant Protein,G12mut vac
+C29138,K-RAS VAL-12 Mutant Protein,G12V vac
+C29141,KRAS CYS-12 Mutant Protein,G12C vac

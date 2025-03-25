@@ -82,19 +82,23 @@ findParents <- function(term) {
 }
 
 
-# Create a data.table with KRAS/BRAF related drugs ----
+# Create a data.table with KRAS/BRAF related drugs ------
 
-x <- thesaurus[c(findChildren("C1902")$code,"C62508")][children==0]
-x[,Group:="KRAS"]
-drugs <- x
+# Add Ras inhibitors (code C19902)
 
-# with braf inhibitors
+drugs <- thesaurus[findChildren("C1902")$code][children==0][,Group:="KRAS"] %>% data.table
+
+# Also include Diazopinomicin
+
+x <- thesaurus["C62508"][,Group:="KRAS"] %>% data.table
+drugs <- rbind(drugs,x)
+
+# add braf inhibitors
 x <- thesaurus[findChildren("C2336")$code]
 x <- rbind(x,thesaurus[isDrug][grep("raf kinase|kinases raf",paste(definition,synonyms),ignore.case = T)]) %>% unique
 x <- rbind(x,thesaurus[isDrug][grep("pan-raf",paste(name,synonyms),ignore.case = T)]) %>% unique
 toadd <- c("C126653","C121958") # radioconjugates
 x <- rbind(x,thesaurus[toadd]) %>% unique
-
 x[,Group:="BRAF"]
 
 drugs <- rbind(drugs,x[children==0])
@@ -113,205 +117,214 @@ drugs <- rbind(drugs,x)
 
 # RAS TCRs
 
-x <- thesaurus[isDrug][grepl("TCR",synonyms) & grepl("k[-]*ras",synonyms,ignore.case = T)]
+x <- thesaurus[isDrug][grepl("TCR",paste(synonyms,definition)) & grepl("k[-]*ras",paste(synonyms,definition),ignore.case = T)]
 x[,Group:="KRAS"]
 x[,Type:="TCR"]
 drugs <- rbind(drugs,x,fill=T)
 
 # RAS vaccines
 
-x <- thesaurus[grep("K[-]*RAS.+vaccine|KRAS-EphA-2-CAR-DC|ELI-002|GRT-C903|KRAS-EphA-2-CAR-DC",synonyms,ignore.case = T)]
+x <- thesaurus[grepl("vaccine",paste(synonyms,definition),ignore.case = T) &
+                 grepl("K[-]*RAS",paste(synonyms,definition),ignore.case = T)]
+
+# VSV-GP154 is not clearly a KRAS vaccine
+x <- x[!grepl("VSV-GP154",synonyms)]
+
 x[,Group:="KRAS"]
 x[,Type:="Vaccine"]
 drugs <- rbind(drugs,x)
 
-# pan-ras or pan-kras perhaps not included?
+# pan-ras or pan-kras not included?
 
-x <- thesaurus[isDrug][grep("pan-ras|pan-kras",paste(definition,synonyms),ignore.case = T)]
-x$code %in% drugs$code
+x <- thesaurus[isDrug][grep("pan-ras|pan-kras|pan-k-ras",paste(definition,synonyms),ignore.case = T)]
+x$code %in% drugs$code # all included
 
 table(drugs$Group)
 drugs[duplicated(code)]
 
 # classification by type and target molecule
 
+# mutations named in synonyms or definition field
+
+library(stringr)
+drugs[,named_mutations:=str_extract_all(paste(synonyms,definition) %>% toupper,"(G[0-9]+[A-Z]|V600[A-Z]|BRAF|B-RAF|PAN-[K]*RAS|PAN-[B]*RAF)")[[1]] %>% 
+        gsub("B-RAF","BRAF",.) %>% unique %>% paste(.,collapse=":"),by=code]
+
+
+
 drugs$Target <- NULL
 
 #G12C
+
 drugs[match(findChildren("C201853")$code,code),Target:="G12C"]
-#BI 3706674 is a pan-KRAS
-drugs[grep("BI 3706674",name),Target:="pan-KRAS"]
-drugs[grep("G12C",synonyms)]
-drugs[grep("fulzerasib|divarasib",synonyms,ignore.case = T),Target:="G12C"]
+drugs[grep("fulzerasib|divarasib|talorasib",synonyms,ignore.case = T),Target:="G12C"]
+
+drugs[grep("G12C",paste(synonyms,definition),ignore.case = T)]
 
 #G12D
 drugs[match(findChildren("C207236")$code,code),Target:="G12D"]
 drugs[grep("G12D",synonyms),Target:="G12D"]
 
-#G12V
-drugs[grep("G12V",synonyms),Target:="G12V"]
-
-#pan-KRAS (or multi)
-drugs[grep("C185876|C188048|C178264|C71146|C206998",code),Target:="pan-KRAS"]
-drugs[grep("C209714|C204884|C202009|C204252|C162269|C165638|C2067|C179231|C165514|C200465|C162186",code),Target:="multi-KRAS"]
-
+drugs[grep("G12D",paste(synonyms,definition),ignore.case = T)]
 
 #SOS1/SHP2
-drugs[grep("SOS1|SHP2",Group),Target:="SOS1|SHP2"]
+drugs[grep("SOS1|SHP2",Group),Target:="SOS1:SHP2"]
 
 #BRAF
 drugs[grep("BRAF",Group),Target:="BRAF"]
 
 #OTHER
-drugs[grep("Diazepinomicin",name),`:=`(Type="Inhibitor",Target="pan-KRAS")]
+drugs[grep("Diazepinomicin",name),`:=`(Type="Inhibitor",Target="pan-RAS")]
 
 #Classify drug type
 drugs[grep("inhibitor",name,ignore.case = T),Type:="Inhibitor"]
-drugs[grep("fenib|protafib|rasib|tinib|Paluratide|Rigosertib",name),Type:="Inhibitor"]
+drugs[grep("(nib|fib|sib|tib|ratide)( |$)",name),Type:="Inhibitor"]
+
 drugs[grep("degrader",synonyms,ignore.case = T),Type:="Degrader"]
 
-drugs[grep("Glue",name),Type:="Molecular Glue"]
-drugs[grep("Antisense",name),Type:="Antisense"]
+drugs[grep("Glue",name,ignore.case = T),Type:="Molecular Glue"]
+drugs[grep("Antisense",name,ignore.case = T),Type:="Antisense"]
 
 drugs[grep("Urea",name),`:=`(synonyms=paste0(synonyms,"|heterocyclic urea"),Type="Inhibitor")]
 
-# pan-ras wrongly identified?
-
-drugs[grep("pan-",paste(name,synonyms,definition),ignore.case=T),list(name,Type,Target)]
-drugs[grep("G12C",paste(name,synonyms)),list(name,Type,Target)]
-drugs[grep("wild-type",paste(name,synonyms,definition),ignore.case=T),list(name,Type,Target)]
-drugs[grep("3706674",name)]
-
 # remove some salt forms of drugs
-
 remove <- "Divarasib Adipate|Rigosertib Sodium|Sorafenib Tosylate|Dabrafenib Mesylate|Lifirafenib Maleate|Regorafenib Anhydrous"
-
 drugs <- drugs[grep(remove,name,invert = T)]
 
 
 # correct paluratide = LUNA18
+# https://pubchem.ncbi.nlm.nih.gov/compound/Paluratide
 
 drugs[grep("LUNA18",synonyms,ignore.case = T),synonyms:=paste0(synonyms,"|paluratide|PALURATIDE")]
 drugs <- drugs[name!="Paluratide"] 
-
 drugs[,From:="NCI Thesaurus"]
 
 
-# additional manually added drugs
+# Correct discrepancies ----
 
-additional.drugs <- fread("additional_files/drug.revision.txt")
+drugs[grep("G12C",paste(name,synonyms)),list(name,Type,Target,named_mutations)] # ok
+drugs[grep("G12D",paste(name,synonyms)),list(code,Type,Target,named_mutations)] # not ok, C212035 also targets G12V
+drugs[code=="C212035",Target:="multi-KRAS"]
 
-for(i in 1:nrow(additional.drugs)) {
-  
-  hits <- any(grepl(additional.drugs$synonyms[i],drugs$synonyms))
-  if(hits) print(additional.drugs[i])
-  
-}
+# pan-KRAS vs multi-KRAS
 
+
+# Vaccines and TCRs are multi-RAS (they do not target the wild-type)
+
+drugs[Type %in% c("Vaccine","TCR") & is.na(Target)] -> x
+drugs[Type %in% c("Vaccine","TCR") & named_mutations=="G12V",Target:="G12V"]
+drugs[Type %in% c("Vaccine","TCR") & grepl("-12",name),Target:=c("multi-KRAS","G12V","G12C")]
+drugs[code %in% c("C204252","C162186","C162269","C165638","C179231","C200465","C2067","C202009","C204884"),Target:="multi-KRAS"]
+drugs[code == "C29136",Target:="G13N"]
+
+# Pan-Ras
+
+drugs[is.na(Target),list(name,definition,code)] -> x
+
+drugs[code %in% c("C178264","C185876","C188048","C71146","C209714","C213206"),Target:="pan-RAS"]
+
+
+
+
+
+# short names for figures (manually curated) ----
+
+drugs[,short.Name := NULL]
+drugs <- merge(drugs,fread("additional_files/short.names.csv")[,list(code,short.Name)],all.x=T)
+
+
+
+# additional drugs, manually added ----
+
+# Note: it is unclear whether LY4066434 is G12D or pan-KRAS
+
+additional.drugs <- fread("additional_files/drug.revision.csv")
+
+intersect(additional.drugs$synonyms %>% strsplit(.,split="\\|") %>% unlist(),
+          drugs$synonyms %>% strsplit(.,split="\\|") %>% unlist()) %>% paste(.,collapse="|") -> already.included
 
 additional.drugs[,`:=`(From="Manually Added",children=0)]
 
 drugs <- rbind(drugs,additional.drugs,fill=T)
 
-# short names for figures ----
 
-drugs[,short.Name:=name]
-drugs[,short.Name := gsub("^.*(Inhibitor|Degrader|Glue|Oligonucleotide|Fluorine|Carbon) ","",short.Name)]
-drugs[,short.Name := gsub("mTCR-transduced Autologous Peripheral Blood Lymphocytes","mTCR",short.Name)]
-drugs[,short.Name := gsub("^.* Urea","Policyclic Urea",short.Name)]
-drugs[,short.Name := gsub("K-RAS","KRAS",short.Name)]
-
-drugs[grep(" NT-112",short.Name),short.Name := "NT-112"]
-drugs[grep(" AFNT-211",short.Name),short.Name := "AFNT-211"]
-drugs[grep("C204252",code),short.Name := "Anti-KRAS Mutant mTCR"]
-drugs[Type=="Vaccine",short.Name := gsub("^.* Vaccine ","",short.Name)]
-
-drugs[name=="Autologous mDC3/8-KRAS Vaccine",short.Name:="Autologous mutant-KRAS Vaccine"]
-drugs[name=="Pooled Mutant KRAS-Targeted Long Peptide Vaccine",short.Name:="Pooled mutant-KRAS Vaccine"]
-drugs[name=="K-RAS Protein Vaccine",short.Name:="Mutant-KRAS Vaccine"]
-drugs[order(nchar(short.Name)),list(name,short.Name)]
 
 # end creating the drugs data.table -------
 
 drugs[,table(From,Group)]
+drugs[is.na(code),code:="N.A."]
 
-drugs[is.na(code),code:="----"]
-
-x <- drugs[Group!="BRAF",list(code,short.Name,Type,Target)]
-x[Target=="G12C",Target:="KRAS G12C"]
-x[Target=="G12D",Target:="KRAS G12D"]
-x[Target=="G12V",Target:="KRAS G12V"]
-
-x[,Target := factor(Target,c("KRAS G12C","KRAS G12D","KRAS G12V","multi-KRAS","pan-KRAS","SOS1|SHP2","PBR"))]
-x <- x[order(Target,Type,short.Name)]
-
-colnames(x) <- c("NCI Thesaurus\nCode","Short Name","Type","Target")
-
-png("output/table1.png",1400,1200)
-g1 <- tableGrob(x[1:42],rows=NULL,theme=ttheme_default(base_size=20))
-g2 <- tableGrob(x[43:84],rows=NULL,theme=ttheme_default(base_size=20))
+x <- drugs[Target!="BRAF"][order(Target,Type),list("Thesaurus\ncode"=code,"Name"=short.Name,Target,Type)]
+dim(x)
+png("output/drugs_table.png",1200,1400)
+g1 <- tableGrob(x[1:45],rows=NULL,theme=ttheme_default(base_size=20))
+g2 <- tableGrob(x[46:90],rows=NULL,theme=ttheme_default(base_size=20))
 grid.arrange(g1,g2,layout_matrix=matrix(1:2,ncol=2))
 dev.off()
 
+
 # Clinical trials for colorectal cancer or solid tumors ----
+# I haven't found a more elegant way of downloading the clincal trials data
+# Downloading clinical trials data requires the input from the user...
 
 browseURL("https://clinicaltrials.gov/search?cond=((colon%20OR%20rectal%20OR%20colorectal)%20AND%20cancer)%20OR%20(solid%20tumors)")
 # download ctg-studies 
+file.copy(from = "~/Downloads/ctg-studies.csv",to = "additional_files/ctg-studies.csv",overwrite = T)
 
-file.copy(from = "~/Downloads/ctg-studies.csv",to = "additional_files/ctg-studes.csv",overwrite = T)
-
-ctrials <- fread("additional_files/ctg-studes.csv")
+ctrials <- fread("additional_files/ctg-studies.csv")
 setkey(ctrials,"NCT Number")
 
 # correct some misspellings
 ctrials[grep("LY4066434.",Interventions),Interventions:=gsub("LY4066434\\.","LY4066434",Interventions)] 
 ctrials[grep("5Fluoro",Interventions,ignore.case = T),Interventions:=gsub("5Fluoro","5-Fluoro",Interventions,ignore.case = T)] 
 
-dim(ctrials)
+message("Loaded ",dim(ctrials)[1]," clinical trials") 
+
 
 # search in clinical trials
 
-crc <- ctrials[grepl("colon|rectal|gastrointestinal|solid|crc",Conditions,ignore.case = T) & `Study Type`=="INTERVENTIONAL"]
+# Search for clinical trials on CRC (or gastrointestinal) cancers
+
+crc <- ctrials[grepl("colon|rectal|gastrointestinal|crc|solid",Conditions,ignore.case = T) & `Study Type`=="INTERVENTIONAL"]
 crc <- crc[grep("TREATMENT",`Study Design`)]
 crc <- rbind(crc,ctrials[grep("NCT06385925|NCT04330664|NCT03785249",`NCT Number`)])
 
 drug.columns <- c("Drug.Code","Drug.Name","Drug.Type","Drug.Target","Drug.Group")
 crc[,(drug.columns) := ""]
 
-
 for(i in 1:nrow(drugs)) {
   hits <- grep(drugs$synonyms[i],crc$Interventions,ignore.case = T)
-  crc[hits,Drug.Code:=paste0(Drug.Code,drugs$code[i],"|")]
-  crc[hits,Drug.Name:=paste0(Drug.Name,drugs$short.Name[i],"|")]
-  crc[hits,Drug.Type:=paste0(Drug.Type,drugs$Type[i],"|")]
-  crc[hits,Drug.Target:=paste0(Drug.Target,drugs$Target[i],"|")]
-  crc[hits,Drug.Group:=paste0(Drug.Group,drugs$Group[i],"|")]
+  crc[hits,Drug.Code:=paste(Drug.Code,drugs$code[i],sep="|")]
+  crc[hits,Drug.Name:=paste(Drug.Name,drugs$short.Name[i],sep="|")]
+  crc[hits,Drug.Type:=paste(Drug.Type,drugs$Type[i],sep="|")]
+  crc[hits,Drug.Target:=paste(Drug.Target,drugs$Target[i],sep="|")]
+  crc[hits,Drug.Group:=paste(Drug.Group,drugs$Group[i],sep="|")]
   }
 
-# remove the last |
+# remove the initial |
 
-crc[,(drug.columns) := lapply(.SD,function(x) gsub("\\|$","",x)),.SDcols=drug.columns]
+crc[,(drug.columns) := lapply(.SD,function(x) gsub("^\\|","",x)),.SDcols=drug.columns]
 
 dim(crc)
 
 kras.trials <- crc[grep("KRAS|SHP2|SOS1",Drug.Group)]
-kras.trials[,(drug.columns) := ""]
+message("KRAS Trials n=",nrow(kras.trials))
 
-drugs2 <- drugs[Group!="BRAF"]
+kras.trials[,(drug.columns) := ""]
+drugs2 <- drugs[Target!="BRAF"]
 
 for(i in 1:nrow(drugs2)) {
   hits <- grep(drugs2$synonyms[i],kras.trials$Interventions,ignore.case = T)
-  kras.trials[hits,Drug.Code:=paste0(Drug.Code,drugs2$code[i],"|")]
-  kras.trials[hits,Drug.Name:=paste0(Drug.Name,drugs2$short.Name[i],"|")]
-  kras.trials[hits,Drug.Type:=paste0(Drug.Type,drugs2$Type[i],"|")]
-  kras.trials[hits,Drug.Target:=paste0(Drug.Target,drugs2$Target[i],"|")]
-  kras.trials[hits,Drug.Group:=paste0(Drug.Group,drugs2$Group[i],"|")]
+  kras.trials[hits,Drug.Code:=paste(Drug.Code,drugs2$code[i],sep="|")]
+  kras.trials[hits,Drug.Name:=paste(Drug.Name,drugs2$short.Name[i],sep="|")]
+  kras.trials[hits,Drug.Type:=paste(Drug.Type,drugs2$Type[i],sep="|")]
+  kras.trials[hits,Drug.Target:=paste(Drug.Target,drugs2$Target[i],sep="|")]
+  kras.trials[hits,Drug.Group:=paste(Drug.Group,drugs2$Group[i],sep="|")]
 }
 
-kras.trials[,(drug.columns) := lapply(.SD,function(x) gsub("\\|$","",x)),.SDcols=drug.columns]
+kras.trials[,(drug.columns) := lapply(.SD,function(x) gsub("^\\|","",x)),.SDcols=drug.columns]
 
 kras.trials[Drug.Target!=""]
-
 
 # trials in review 2024
 inReview <- c("NCT05485974","NCT05462717","NCT06244771","NCT04121286","NCT06385925","NCT05737706","NCT06364696","NCT06403735","NCT06040541","NCT06412198","NCT05194995","NCT04330664","NCT05288205","NCT06039384","NCT05198934","NCT04956640","NCT05578092","NCT04699188","NCT04449874","NCT05358249","NCT06026410","NCT06252649","NCT06586515","NCT04793958","NCT03785249","NCT05722327","NCT06599502","NCT06078800","NCT06607185","NCT06447662","NCT06585488","NCT06445062","NCT05379985","NCT05786924","NCT06194877","NCT05200442","NCT06270082","NCT05163028","NCT04117087","NCT04853017","NCT06411691","NCT05726864","NCT06105021","NCT06253520","NCT06487377","NCT06218914")
@@ -322,20 +335,20 @@ dim(missed)
 
 # check missed trials
 
-ctrials[grepl("k[-]*ras",Interventions,ignore.case = T) & ! `NCT Number` %in% kras.trials$`NCT Number`]
+x <- ctrials[grepl("k[-]*ras",Interventions,ignore.case = T) & ! `NCT Number` %in% kras.trials$`NCT Number` &
+               grepl("TREATMENT",`Study Design`)]
+dim(x) # 7 trials putatively missed
 
+# Targeting KRAS: 1,2,4,5,6,7
 
-
-
-
-
+x <- fread("additional_files/additional.kras.trials.csv")
 
 
 
 
 # review trials with more than one identified drug
 
-kras.trials[grep("\\|",Drug.Name),list(`NCT Number`,Interventions,Drug.Name)]
+kras.trials[grep("\\|",Drug.Name),list(`NCT Number`,Interventions,Drug.Name),table(s)]
 
 
 
@@ -396,7 +409,7 @@ my.palette$targets <- c("G12C"="#03396c",
                         "G12V"="#03396c",
                         "multi-KRAS"="#ff4d00",
                         "pan-KRAS"="#aa2000",
-                        "SOS1|SHP2"="#aa2000",
+                        "SOS1:SHP2"="#aa2000",
                         "BRAF"="#454545",
                         "RAF"="#454545")
 

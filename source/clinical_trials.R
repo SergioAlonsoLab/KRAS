@@ -4,6 +4,8 @@ library(ggplot2)
 library(forcats)
 library(RColorBrewer)
 library(gridExtra)
+library(igraph)
+library(stringr)
 
 
 # useful functions to expand and contract terms
@@ -41,7 +43,7 @@ if(!file.exists("data/Thesaurus.txt")) {
 }
 
 
-thesaurus <- fread("data/Thesaurus.zip",quote="")
+thesaurus <- fread("data/Thesaurus.FLAT.zip",quote="")
 names(thesaurus) <- c("code","concept IRI","parents","synonyms","definition","display name","concept status","semantic type","concept in subset")
 thesaurus$synonyms %>% split1 %>% sapply(FUN=function(x) x[1]) -> thesaurus$name # the preferred name
 setkey(thesaurus,"code")
@@ -62,7 +64,6 @@ isDrug <- grep("Pharmacolo",thesaurus$`semantic type`)
 
 # reconstruct the thesaurus tree
 
-library(igraph)
 
 relations <- thesaurus[,list(parents=strsplit(parents,split="\\|")[[1]]),by=code]
 thesaurusGraph <- graph_from_edgelist(as.matrix(relations[,2:1]))
@@ -146,7 +147,6 @@ drugs[duplicated(code)]
 
 # mutations named in synonyms or definition field
 
-library(stringr)
 drugs[,named_mutations:=str_extract_all(paste(synonyms,definition) %>% toupper,"(G[0-9]+[A-Z]|V600[A-Z]|BRAF|B-RAF|PAN-[K]*RAS|PAN-[B]*RAF)")[[1]] %>% 
         gsub("B-RAF","BRAF",.) %>% unique %>% paste(.,collapse=":"),by=code]
 
@@ -234,7 +234,7 @@ drugs <- merge(drugs,fread("additional_files/short.names.csv")[,list(code,short.
 
 
 
-# additional drugs, manually added ----
+# additional drugs, manually curated ----
 
 # Note: it is unclear whether LY4066434 is G12D or pan-KRAS
 
@@ -261,7 +261,6 @@ g1 <- tableGrob(x[1:45],rows=NULL,theme=ttheme_default(base_size=20))
 g2 <- tableGrob(x[46:90],rows=NULL,theme=ttheme_default(base_size=20))
 grid.arrange(g1,g2,layout_matrix=matrix(1:2,ncol=2))
 dev.off()
-
 
 # Clinical trials for colorectal cancer or solid tumors ----
 # I haven't found a more elegant way of downloading the clincal trials data
@@ -331,7 +330,7 @@ inReview <- c("NCT05485974","NCT05462717","NCT06244771","NCT04121286","NCT063859
 inReview <- ctrials[inReview]
 
 setdiff(inReview$`NCT Number`,crc[Drug.Type!="",`NCT Number`]) %>% ctrials[.] -> missed
-dim(missed)
+dim(missed) # two trials were not retrieved by using the previous approach
 
 # check missed trials
 
@@ -341,24 +340,32 @@ dim(x) # 7 trials putatively missed
 
 # Targeting KRAS: 1,2,4,5,6,7
 
-x <- fread("additional_files/additional.kras.trials.csv")
+x <- rbind(kras.trials,x[c(1,2,4,5,6,7)],fill=T)
+x2 <- fread("data/curated.kras.trials.csv") # manually curated
 
+x$`NCT Number` == x2$`NCT Number`
 
+x$Drug.Code <- x2$Drug.Code
+x$Drug.Name <- x2$Drug.Name
+x$Drug.Type <- x2$Drug.Type
+x$Drug.Target <- x2$Drug.Target
+x$Drug.Group <- x2$Drug.Group
 
+kras.trials <- x
+rm(x,x2)
 
+table(kras.trials$Drug.Type)
+table(kras.trials$Drug.Target)
 # review trials with more than one identified drug
-
-kras.trials[grep("\\|",Drug.Name),list(`NCT Number`,Interventions,Drug.Name),table(s)]
-
 
 
 # save for manual revision 
 
-fwrite(kras.trials,"data/kras.studies.csv",sep=",")
+# fwrite(kras.trials,file="data/curated.kras.trials.csv")
 
 # fread the revised version
 
-try(kras.trials <- fread("data/kras.studies.revised.csv"),silent=T)
+try(kras.trials <- fread("data/curated.kras.trials.csv"),silent=F)
 
 # add bibligraphic information (takes several min)
 
@@ -396,93 +403,51 @@ kras.trials[is.na(completion)]
 my.palette <- list()
 my.palette$kras.type <- c("#3588C7","#1A4EA0","#8FBA6F","#4F8B7A","#405D02","#F8CB1C","#C65684","#EF0060")
 
-kras.trials$Drug.Type %>% split1 %>% lapply(FUN=function(x) x %>% unique %>% sort %>% join1) %>% unlist -> kras.trials$Drug.Type
-
-library(ggh4x)
-library(ggnewscale)
-library(ggtext)
-library(gridExtra)
+table(kras.trials$Phases)
 
 
-my.palette$targets <- c("G12C"="#03396c",
-                        "G12D"="#03396c",
-                        "G12V"="#03396c",
-                        "multi-KRAS"="#ff4d00",
-                        "pan-KRAS"="#aa2000",
-                        "SOS1:SHP2"="#aa2000",
-                        "BRAF"="#454545",
-                        "RAF"="#454545")
-
-my.palette$targets[drugs$Target] -> drugs$color
-
-
-plot.trials <- list(aes(x=start,y=`NCT Number`),
-                    scale_x_date(date_breaks = "year", date_labels = "%Y",limits = as.Date(c("2000-01-01","2040-12-31"))),
-                    geom_vline(xintercept = as.Date("2024-11-20"),color="grey",lwd=3),
-                    geom_segment(aes(x=start,xend=completion),lwd=1.5,show.legend = F),
-                    scale_color_manual("Drug Type",values=my.palette$kras.type),
-                    new_scale_color(),
-                    geom_point(size=3,pch=15,aes(color=`Study Status`),show.legend = F),
-                    scale_color_manual("Status",
-                                       values=c(NOT_YET_RECRUITING="#94C58C",
-                                                RECRUITING="#1A8828",
-                                                ENROLLING_BY_INVITATION="#0A6921",
-                                                ACTIVE_NOT_RECRUITING="#3170DE",
-                                                COMPLETED="#092B9C",
-                                                WITHDRAWN="#de894a",
-                                                SUSPENDED="#cb5323",
-                                                TERMINATED="#B22222",
-                                                UNKNOWN="#888888")),
-                    
-                    geom_point(aes(x=as.Date(`Last Update Posted`)),pch=21,lwd=0.2,fill="white"),
-                    
-                    scale_y_discrete(limits=rev),
-                    geom_richtext(aes(label=labels),hjust=1,nudge_x = -365,size=3,fill = NA,label.colour=NA),
-                    
-                    
-                    theme(axis.text.x = element_text(angle=90,hjust=1,vjust=0.5)),
-                    ylab(""),
-                    xlab(""),
-                    mytheme,
-                    theme(panel.background = element_rect(fill="white")))
+x <- kras.trials
+x[completion > `Last Update Posted`,last:=completion]
+x[completion <= `Last Update Posted`,last:=`Last Update Posted`]
+x[,target := Drug.Target %>% split1 %>% unlist %>% sort %>% unique %>% join1,by=`NCT Number`]
+x <- x[order(target,start)]
+x[,`NCT Number`:=factor(`NCT Number`,levels=as.character(`NCT Number`))]
 
 
 
+trial.plot <- list(
+  aes(start,`NCT Number`),
+  geom_vline(xintercept = as.Date("2025-03-15"),lwd=3,color="grey"),
+  geom_segment(aes(yend=`NCT Number`,xend=completion),lwd=2),
+  geom_point(aes(color=`Study Status`)),
+  xlab(""),
+  ylab(""),
+  scale_x_date(limits=as.Date(c("2010-01-01","2045-12-31"))),
+  scale_y_discrete(limits=rev),
+  geom_point(aes(x=as.Date(`Last Update Posted`)),pch=21,lwd=0.2,fill="white"),
+  geom_text(aes(label=target,x=start),hjust=1,nudge_x=-365,size=3),
+  theme(strip.text.x.top = element_text(size=12,face = "bold"),
+        panel.background = element_rect(fill="white"))
+  
+)
 
-kras.trials$Drug.Name %>% strsplit(split="\\|") %>% 
-  sapply(FUN=function(x) {
-    
-    color <- drugs[match(x,short.Name),color] 
-    sprintf("<span style='color:%s'>%s</span>",color,x) %>% paste(.,collapse=" | ")
-    
-  }) -> kras.trials$labels
+active <- ! x$`Study Status` %in% c("COMPLETED","TERMINATED")
 
-
-
-g1 <- ggplot(kras.trials[`Study Status`=="NOT_YET_RECRUITING"]) + 
-  plot.trials +
-  ggtitle("Not yet recruiting")
-
-g2 <- ggplot(kras.trials[`Study Status`=="RECRUITING"]) + 
-  plot.trials +
-  ggtitle("Recruiting")
-
-g3 <- ggplot(kras.trials[`Study Status`=="ENROLLING_BY_INVITATION"]) + 
-  plot.trials +
-  ggtitle("Enrolling by invitation")
-
-g4 <- ggplot(kras.trials[`Study Status`=="ACTIVE_NOT_RECRUITING"]) + 
-  plot.trials +
-  ggtitle("Active, not recruiting")
-
-g5 <- ggplot(kras.trials[`Study Status`=="COMPLETED"]) + 
-  plot.trials +
-  ggtitle("Completed")
+g0 <- ggplot(x[!active]) + trial.plot +
+  facet_wrap(~"Completed or terminated") +   
+  scale_x_date(limits=as.Date(c("2006-01-01","2030-12-31"))) +
+  theme(legend.position = "none")
 
 
-library(gridExtra)
-grid.arrange(g1,g2,g3,g4,g5,layout_matrix=matrix(c(1,2,2,3,4,5),ncol=2),heights=c(1.5,5,2))
+g1 <- ggplot(x[active & Phases=="PHASE1"]) + trial.plot + facet_wrap(~ "Phase I") + theme(legend.position = "none")
 
+
+g2 <- ggplot(x[active & grepl("PHASE2",Phases)]) + trial.plot + facet_wrap(~ "Phase I/II or II") + theme(legend.position = "none")
+
+g3 <- ggplot(x[active & Phases=="PHASE3"]) + trial.plot + facet_wrap(~ "Phase III") + 
+  geom_text(aes(label=sprintf("%s (%s)",Acronym,Drug.Name),x=last),hjust=0,nudge_x = 365) 
+
+grid.arrange(g0,g1,g2,g3,layout_matrix=matrix(c(2,3,1,2,4,4),byrow=T,ncol=3),heights=c(9,2),widths=c(3,3,2))
 
 
 

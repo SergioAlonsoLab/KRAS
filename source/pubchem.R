@@ -1,4 +1,4 @@
-lapply(dir("additional_files/",pattern="PubChem*"),
+lapply(dir("additional_files/",pattern="PubChem_*"),
        function(x) {
          d0 <- fread(paste0("additional_files/",x))
          d0[,File:=x]

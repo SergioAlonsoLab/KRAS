@@ -70,7 +70,7 @@ findParents <- function(term) {
 }
 
 
-# Create a data.table with KRAS/BRAF related drugs ------
+# Create a data.table with KRAS related drugs ------
 
 # Add Ras inhibitors (code C19902)
 
@@ -95,7 +95,7 @@ drugs <- rbind(drugs,x)
 
 # RAS TCRs
 
-x <- thesaurus[isDrug][grepl("TCR",paste(synonyms,definition)) & grepl("K[-]*RAS",paste(synonyms,definition),ignore.case = T)]
+x <- thesaurus[isDrug][grepl("TCR",paste(synonyms,definition)) & grepl("[ NKH][-]*RAS",paste(synonyms,definition),ignore.case = T)]
 x[,Group:="KRAS"]
 x[,Type:="TCR"]
 drugs <- rbind(drugs,x,fill=T)
@@ -103,12 +103,17 @@ drugs <- rbind(drugs,x,fill=T)
 # RAS vaccines
 
 x <- thesaurus[grepl("vaccine",paste(synonyms,definition),ignore.case = T) &
-                 grepl("K[-]*RAS",paste(synonyms,definition),ignore.case = T)]
+                 grepl("[ KNH][-]*RAS",paste(synonyms,definition),ignore.case = T)][name!="Measles" & children==0]
 
-# VSV-GP154 is not clearly a KRAS vaccine
-x <- x[!grepl("VSV-GP154",synonyms)]
 x[,Group:="KRAS"]
 x[,Type:="Vaccine"]
+
+# this retrieves also peptides and proteins that "may" be used as vaccines, but are not actual vaccines
+
+x[grepl("Peptide",name) & !grepl("Vaccine",name),Type:="Mutant Peptide"]
+x[grepl("Protein",name) & !grepl("Vaccine",name),Type:="Mutant Protein"]
+
+x
 drugs <- rbind(drugs,x)
 
 # pan-ras or pan-kras not included?
@@ -183,6 +188,10 @@ drugs[grep("G12D",paste(name,synonyms)),list(code,Type,Target,named_mutations)] 
 drugs[code=="C212035",Target:="multi-KRAS"]
 
 # pan-KRAS vs multi-KRAS
+
+drugs[Type=="Vaccine",paste(code,name,definition,synonyms,named_mutations,sep = "\n")] %>% unlist %>% cat(sep="\n--------------\n")
+
+
 # Vaccines and TCRs are multi-RAS (they do not target the wild-type)
 
 drugs[Type %in% c("Vaccine","TCR") & is.na(Target)] -> x

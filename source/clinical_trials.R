@@ -72,6 +72,12 @@ findParents <- function(term) {
 
 # Create a data.table with KRAS related drugs ------
 
+# add some missing synonyms for RMC drugs
+
+thesaurus[grep("RMC-9805",synonyms),synonyms:=paste0("Zoldonrasib",synonyms)]
+thesaurus[grep("RMC-6236",synonyms),synonyms:=paste0("Daraxonrasib",synonyms)]
+thesaurus[grep("RMC-6291",synonyms),synonyms:=paste0("Elironrasib",synonyms)]
+
 # Add Ras inhibitors (code C19902)
 
 drugs <- thesaurus[findChildren("C1902")$code][children==0][,Group:="KRAS"] %>% data.table

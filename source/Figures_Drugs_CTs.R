@@ -52,6 +52,91 @@ png("output/table.drugs.png",height=18,width=20, res = 150, units = "in")
 grid.arrange(tableA,tableB,g1,layout_matrix=matrix(c(1,2,3,NA),ncol=2,byrow=T),heights=c(10,3))
 dev.off()
 
+# the table figure has very small fontype
+# exploring other alternatives
+
+library(networkD3)
+library(ggalluvial)
+
+library(dplyr)
+library(forcats)
+
+
+
+links1 <- drugs[,.(value=.N),by=list(source=ifelse(CTrials=="","Not in Clinical Trials","In Clinical Trials"),target=Type)]
+links2 <- drugs[,.(value=.N),by=list(source=Type,target=Target)]
+#links3 <- drugs[,.(value=.N),by=list(source=ifelse(CTrials=="","Not in CTs","In CT"),target=Target)]
+links <- rbind(links1,links2)
+
+nodes <- data.frame(name=unique(c(links$source,links$target)))
+
+links[,.(Total=sum(value)),by=source]
+
+links2 <- links
+
+links2$source <- match(links$source,nodes$name) - 1
+links2$target <- match(links$target,nodes$name) - 1
+
+sankeyNetwork(Links = links2, Nodes = nodes,
+              Source = "source", Target = "target",
+              Value = "value", NodeID = "name",
+              fontSize = 25, nodeWidth = 75,fontFamily = "Arial",
+              height=600,width=1200)
+
+
+
+ggplot(links) + aes(axis1 = "source", axis)
+
+
+df <- drugs[,list(Clinical_Trials=ifelse(CTrials=="","NO","YES"),Type,Target,value=1)]
+
+df <- df %>%
+  mutate(
+    Clinical_Trials = fct_infreq(Clinical_Trials),
+    Type = fct_infreq(Type),
+    Target = factor(Target,c("G12C","G12D","G12V","G13N","multi-KRAS","pan-KRAS","pan-RAS","SOS1","SHP2")))
+
+
+df$Type
+table(df$Type)
+
+alluvium.colors <- c(YES="gold2",NO="grey")
+
+foo <- colorRampPalette(c("blue3","lightblue","white"))(5)
+names(foo) <- levels(df$Type)
+
+alluvium.colors <- c(alluvium.colors,foo)
+
+foo <- colorRampPalette(c("pink3","yellow3","green3"))(9)
+names(foo) <- levels(df$Target)
+
+alluvium.colors <- c(alluvium.colors,foo)
+rm(foo)
+
+ggplot(df,
+       aes(axis1 = Type, axis2 = Target, axis3 = Clinical_Trials, y = value)) +
+  geom_alluvium(aes(fill=Target),color="white",width = 1/6,alpha=.5,show.legend = F,lwd=.5) +
+  geom_stratum(aes(fill = after_stat(stratum)), width = 1/6, color = "black",show.legend = F,alpha=.7) +
+  geom_point(stat = "stratum",aes(x=after_stat(x),y=after_stat(y))) +
+  geom_label_repel(stat = "stratum",
+                   point.padding = 0,
+                   min.segment.length = 0,
+                   aes(label = sprintf("%s  (n=%i)",after_stat(stratum),after_stat(count))), 
+                   size = 4,
+                   nudge_x = rep(c(-5,0,1.2)*.2,c(5,9,2)),
+                   box.padding = .4,
+                   fill="#FFFFFFAA") +
+  geom_text(aes(x=1:3,y=110,label=c("Drug\nType","\nTarget","CRC\nClinical Trials")),
+            data=data.frame(),inherit.aes = F,size=5,vjust=0) +
+  theme_void() +
+  scale_fill_manual("In Clinical Trials",values=alluvium.colors) +
+  coord_cartesian(xlim = c(.61,3.4),ylim=c(-1,120)) -> alluvial.plot
+
+ggsave("output/alluvial.png",alluvial.plot,device="png",width=12,height=5,dpi=450,bg = "white")
+
+
+
+
 
 # plots of the Clinical Trials -----
 

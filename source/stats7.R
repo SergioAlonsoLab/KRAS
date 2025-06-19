@@ -1,3 +1,5 @@
+library(patchwork)
+
 
 geneLengths <- genes[transcript_is_canonical==1 & hgnc_symbol!="",list(cds_length=max(cds_length)),by=hgnc_symbol]
 sandbox <- new.env()
@@ -35,9 +37,15 @@ lapply(cohorts[1:3],function(i) {
   
 }) -> bySizePlots
 
-figS7 <- grid.arrange(arrangeGrob(bySizePlots[[1]] + ggtitle("DFCI Primary CRCs"), top=panelTag("A",x = .5)),
-                      arrangeGrob(bySizePlots[[2]] + ggtitle("TCGA Primary CRCs"), top=panelTag("B",x = .5)),
-                      arrangeGrob(bySizePlots[[3]] + ggtitle("MSKCC Primary CRCs"), top=panelTag("C",x = .5)))
+
+bySizePlots[[1]] + ggtitle("DFCI Primary CRCs") +
+  bySizePlots[[2]] + ggtitle("TCGA Primary CRCs") +
+  bySizePlots[[3]] + ggtitle("MSKCC Primary CRCs") +
+  plot_layout(ncol=1) &
+  plot_annotation(tag_levels = "A") & 
+  theme(plot.tag = element_text(size=20),
+        plot.tag.position = c(.01, .98)) -> figS7
+  
 
 figuresHR(figS7,8,12,"FigureS7")
 
@@ -158,8 +166,44 @@ fig7.2 <- ggplot(x2) + aes(value/N*100,KRAS.CODON) +
   theme(strip.text.x.top = element_text(face="italic")) +
   ggtitle("KRAS vs NF1/RASA1 co-mutation analysis in MSK-CHORD Primary CRCs")
 
-fig7.3 <- grid.arrange(arrangeGrob(fig7.1,top=panelTag()),
-                       arrangeGrob(fig7.2,top=panelTag("B")))
+fig7.3 <- fig7.1 + fig7.2 + plot_layout(ncol=1) + 
+  plot_annotation(tag_levels = "A") & 
+  theme(plot.tag = element_text(size=20),
+        plot.tag.position = c(.02, .98))
 
 figuresHR(fig7.3,8,10,"Figure7.1")
              
+merge(x,y[,list(MUTS=.N),by=patientId]) %>% ggplot() + aes(MUTATION_COUNT %>% as.numeric,MUTS) + geom_point()
+
+y[,MUTS:=.N,by=patientId]
+y[,GROUP:="MSS"]
+y[MUTS >= 25,GROUP:="MSI/HYPER"]
+
+y2 <- dcast(y, patientId + GROUP ~ hugoGeneSymbol,value.var = "proteinChange", fun.aggregate = function(x) paste(sort(x),collapse="|"))
+y2[y2==""] <- "WT"
+y2[,M:=.N,by=GROUP]
+y2 <- melt(y2,id.vars = c("patientId","GROUP","M"),variable.name = "Gene",value.name = "Status")
+y2 <- y2[,list(N=.N),by=list(GROUP,hgnc_symbol=Gene,M,g=ifelse(Status=="WT","WT","MUT"))]
+y2 <- merge(y2,geneLengths)
+y2[,GROUP:=factor(GROUP,c("MSS","MSI/HYPER"))]
+
+ggplot(y2[g=="MUT"]) +
+  aes(cds_length,N/M) +
+  geom_point(color="grey80",size=1) +
+  geom_smooth(method="glm",
+              method.args=list(family="binomial"),fill="lightblue",color="#9999FF") +
+  geom_point(color="orange",data = . %>% filter(hgnc_symbol %in% goi),size=3) +
+  geom_point(color="red",data= . %>% filter(hgnc_symbol %in% c("NF1","RASA1")),size=3) +
+  geom_text_repel(aes(label=hgnc_symbol),data= . %>% filter(hgnc_symbol %in% c(goi,"NF1","RASA1")),nudge_x = 0.01,size=3,fontface="italic",max.overlaps=20) +
+  theme1 +
+  theme(text=element_text(size=12)) +
+  scale_x_log10() +
+  xlab("CDS length (log10 scale)") +
+  ylab("Mutation Frequency") +
+  scale_y_continuous(limits=c(0,1)) +
+  facet_wrap(~GROUP) +
+  ggtitle("Mutation Frequency vs CDS length MSK-CHORD Primary CRCs") -> fig7.4
+
+
+figuresHR(fig7.4,8,4,"Figure7.2")
+  

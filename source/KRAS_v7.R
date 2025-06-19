@@ -6,9 +6,17 @@ library(forcats)
 library(ggplot2)
 library(ggrepel)
 library(ggtext)
+library(ggforce)
 library(grid)
 library(gridExtra)
+library(patchwork)
 library(emmeans)
+
+# Note: some multipanel figures are generated using gridExtra
+# we are modifying the code to generate the multipanel figures
+# using patchwork, which is more flexible, straightforward, and 
+# generates better figures since it aligns the plotting areas
+# automatically
 
 
 # list of figures
@@ -57,6 +65,7 @@ panelTag <- function(tag="A",x=1,y=0,fsize=20) {
 }
 
 # high resolution pdf, tiff and png figures
+# it should be changed to ggsave in a future version
 
 figuresHR <- function(gplot,width=10,height=10,fileBaseName="noname",outputDir="output",res=300,...) {
   pdf(sprintf("%s/%s.pdf",outputDir,fileBaseName),width,height)
@@ -86,6 +95,25 @@ goi <- c("APC","TP53","FBXW7","SMAD4","KRAS","NRAS","HRAS","PIK3CA","BRAF")
 # create an ouput directory, if it does not exists
 
 if(!file.exists("output")) dir.create("output")
+
+# STATS 0: TMB in different cohorts -----
+
+ggplot(bowel) + aes(STUDY,TMB_NONSYNONYMOUS) + 
+  geom_violin(aes(fill=STUDY),color=NA,alpha=.75,show.legend=F) + 
+  geom_sina(aes(color=GROUP,group=STUDY),size=.5,maxwidth=.4) +
+  annotate("segment",x=1:4-.3,xend=1:4+.3,y=c(14,14,25,25),yend=c(14,14,25,25)) +
+  annotate("text",x=1:4,y=rep(.13,4),label=paste0("n=",table(bowel$STUDY))) +
+  
+  scale_fill_manual(values=palette$study) +
+  scale_color_manual("GROUP",values=c("grey20","red3")) +
+  guides(color = guide_legend(override.aes = list(size = 2))) +
+  xlab(NULL) +
+  ggtitle("Tumor Mutational Burden") +
+  ylab("TMB (non synonymous mutations / Mb)") +
+  scale_y_log10() + theme1 -> fig0
+
+
+figuresHR(fig0,fileBaseName = "Supplementary_Figure_S1",width=7,height=5)
 
 
 # STATS 1: Ras vs primary / metastasis ------

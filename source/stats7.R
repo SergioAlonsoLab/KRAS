@@ -136,7 +136,7 @@ fig7.1 <- ggplot(stats7b) + aes(index*100,YulesQ) +
   geom_text_repel(aes(label=Gene2),data=stats7b[FDR < 0.05],fontface="italic",size=2.5,nudge_x = 2,max.overlaps = 20) +
   facet_grid(cols=vars(Gene1),rows=vars(GROUP)) +
   scale_color_manual("Sig Level",values=palette$SigLevel,drop=F) +
-  xlab("Co-mutation index (%)") +
+  xlab("Conditional co-mutation frequency (%)") +
   scale_x_continuous(limits=c(0,100)) +
   theme1 +
   theme(strip.text.x.top = element_text(face="italic")) +
@@ -173,8 +173,6 @@ fig7.3 <- fig7.1 + fig7.2 + plot_layout(ncol=1) +
 
 figuresHR(fig7.3,8,10,"Figure7.1")
              
-merge(x,y[,list(MUTS=.N),by=patientId]) %>% ggplot() + aes(MUTATION_COUNT %>% as.numeric,MUTS) + geom_point()
-
 y[,MUTS:=.N,by=patientId]
 y[,GROUP:="MSS"]
 y[MUTS >= 25,GROUP:="MSI/HYPER"]

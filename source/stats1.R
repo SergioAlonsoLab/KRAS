@@ -79,12 +79,15 @@ fig1B <- stats1[Gene %in% c("KRAS","NRAS","HRAS")] %>% ggplot() + layers1
 
 
 # Figure stats 1  
-fig1 <- grid.arrange(arrangeGrob(fig1A,top=panelTag("A")),
-                     arrangeGrob(fig1B,top=panelTag("B")),
-                     heights=c(2,1.1))
 
 
-figuresHR(fig1,10,10,"Figure1")
+fig1 <- fig1A / fig1B + plot_layout(heights=c(2,1.1)) + 
+  plot_annotation(tag_levels = "A") &
+  theme(plot.tag = element_text(size=20),
+        plot.tag.position = c(.05, .98))
+
+
+figuresHR(fig1,8,8,"Figure1")
 
 # Supplementary Figure 1
 

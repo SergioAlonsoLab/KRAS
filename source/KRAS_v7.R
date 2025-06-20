@@ -6,20 +6,19 @@ library(forcats)
 library(ggplot2)
 library(ggrepel)
 library(ggtext)
-library(ggforce)
-library(grid)
+library(ggforce) # for geom_sina
+library(ggpubr)  # nicer way of integrating tables
+library(grid)    
 library(gridExtra)
-library(patchwork)
+library(patchwork) # combine ggplots
 library(emmeans)
 
-# Note: some multipanel figures are generated using gridExtra
-# we are modifying the code to generate the multipanel figures
-# using patchwork, which is more flexible, straightforward, and 
-# generates better figures since it aligns the plotting areas
-# automatically
+# Note: The original multipanel figures were created with gridExtra.
+# We are updating the code to use patchwork, which offers greater flexibility,
+# simpler syntax, and improved figure quality by automatically aligning plotting areas.
 
 
-# list of figures
+# list of figures (to be updated before publishing)
 
 # Figure 1: Mutational frequency of Ras genes and other frequently mutated genes in CRC
 
@@ -140,7 +139,6 @@ source("source/stats4.R",local=STATS4,echo = T)
 
 STATS5 <- new.env()
 source("source/stats5.R",local=STATS5,echo = T)
-
 
 # STATS 6: co-mutational analysis by KRAS mutated codon ----
 
